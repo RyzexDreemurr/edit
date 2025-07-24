@@ -16,7 +16,6 @@
 
 import type { DefaultTheme } from 'vitepress'
 import consola from 'consola'
-import { transform, transformGuide } from './transformer'
 
 // @unocss-include
 
@@ -53,78 +52,13 @@ export const commitRef =
 export const feedback = `<a href="/feedback" class="feedback-footer">Made with ❤</a>`
 
 export const search: DefaultTheme.Config['search'] = {
+  provider: 'algolia',
   options: {
-    _render(src, env, md) {
-      let contents = src
-      // I do this as env.frontmatter is not available until I call `md.render`
-      if (contents.includes('Beginners Guide'))
-        contents = transformGuide(contents)
-      contents = transform(contents)
-      const html = md.render(contents, env)
-      return html
-    },
-    miniSearch: {
-      options: {
-        tokenize: (text) => text.split(/[\n\r #%*,=/:;?[\]{}()&]+/u), // simplified charset: removed [-_.@] and non-english chars (diacritics etc.)
-        processTerm: (term, fieldName) => {
-          // biome-ignore lint/style/noParameterAssign: h
-          term = term
-            .trim()
-            .toLowerCase()
-            .replace(/^\.+/, '')
-            .replace(/\.+$/, '')
-          const stopWords = [
-            'frontmatter',
-            '$frontmatter.synopsis',
-            'and',
-            'about',
-            'but',
-            'now',
-            'the',
-            'with',
-            'you'
-          ]
-          if (term.length < 2 || stopWords.includes(term)) return false
-
-          if (fieldName === 'text') {
-            const parts = term.split('.')
-            if (parts.length > 1) {
-              const newTerms = [term, ...parts]
-                .filter((t) => t.length >= 2)
-                .filter((t) => !stopWords.includes(t))
-              return newTerms
-            }
-          }
-          return term
-        }
-      },
-      searchOptions: {
-        combineWith: 'AND',
-        fuzzy: true,
-        // @ts-ignore
-        boostDocument: (documentId, term, storedFields: Record) => {
-          const titles = (storedFields?.titles as string[])
-            .filter((t) => Boolean(t))
-            .map((t) => t.toLowerCase())
-          // Downrank posts
-          if (documentId.match(/\/posts/)) return -5
-          // Downrank /other
-          if (documentId.match(/\/other/)) return -5
-
-          // Uprate if term appears in titles. Add bonus for higher levels (i.e. lower index)
-          const titleIndex =
-            titles
-              .map((t, i) => (t?.includes(term) ? i : -1))
-              .find((i) => i >= 0) ?? -1
-          if (titleIndex >= 0) return 10000 - titleIndex
-
-          return 1
-        }
-      }
-    },
-    detailedView: true
-  },
-  provider: 'local'
+    appId: 'RAODF83ICK',
+    apiKey: 'c57b03f95617812b567a19078231684b',
+    indexName: 'fmhy',
+    placeholder: 'Search Wiki...'
+  }
 }
 
 export const socialLinks: DefaultTheme.SocialLink[] = [
